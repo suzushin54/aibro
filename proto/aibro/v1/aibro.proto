@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package aibro.v1;
+
+service AIBroService {
+  rpc ChatStream (stream ChatStreamRequest) returns (stream ChatStreamResponse) {}
+}
+
+message ChatStreamRequest {
+  string user_id = 1;
+  string message = 2;
+}
+
+message ChatStreamResponse {
+  string message = 1;
+}
