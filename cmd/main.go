@@ -17,7 +17,7 @@ func main() {
 
 	go func() {
 		if err := srv.Start(); err != nil {
-			logger.Error("Server failed to start", "error", err)
+			logger.Info("Server failed to start", "error", err)
 			os.Exit(1)
 		}
 	}()

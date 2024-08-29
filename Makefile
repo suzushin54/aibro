@@ -21,3 +21,7 @@ install-check:
 buf:
 	buf lint
 	buf generate
+
+.PHONY: run
+run:
+	go run cmd/main.go
