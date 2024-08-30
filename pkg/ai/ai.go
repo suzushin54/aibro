@@ -1,8 +1,9 @@
 package ai
 
 import (
-	"cloud.google.com/go/vertexai/genai"
 	"context"
+
+	"cloud.google.com/go/vertexai/genai"
 )
 
 // Client defines the interface for AI-related operations
@@ -39,6 +40,7 @@ func NewClient(ctx context.Context, config *Config) (Client, error) {
 	}, nil
 }
 
+// Query sends a query to the AI model
 func (v *vertexAIClient) Query(ctx context.Context, prompt string, imageURI string) (string, error) {
 	var parts []genai.Part
 	parts = append(parts, genai.Text(prompt))
@@ -67,6 +69,7 @@ func (v *vertexAIClient) Query(ctx context.Context, prompt string, imageURI stri
 	return "", nil
 }
 
+// Close closes the AI client
 func (v *vertexAIClient) Close() error {
 	return v.client.Close()
 }
