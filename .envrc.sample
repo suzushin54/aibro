@@ -1,0 +1,5 @@
+export PROJECT_ID="your-project-id"
+export REGION="asia-northeast1"
+export MODEL_NAME="gemini-1.5-pro"
+
+# export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account-key.json"
