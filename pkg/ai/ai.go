@@ -2,13 +2,16 @@ package ai
 
 import (
 	"context"
+	"errors"
+
+	"google.golang.org/api/iterator"
 
 	"cloud.google.com/go/vertexai/genai"
 )
 
 // Client defines the interface for AI-related operations
 type Client interface {
-	Query(ctx context.Context, prompt string, imageURI string) (string, error)
+	Query(ctx context.Context, prompt string, imageURI string) (<-chan string, <-chan error)
 	Close() error
 }
 
@@ -41,32 +44,45 @@ func NewClient(ctx context.Context, config *Config) (Client, error) {
 }
 
 // Query sends a query to the AI model
-func (v *vertexAIClient) Query(ctx context.Context, prompt string, imageURI string) (string, error) {
-	var parts []genai.Part
-	parts = append(parts, genai.Text(prompt))
+func (v *vertexAIClient) Query(ctx context.Context, prompt string, imageURI string) (<-chan string, <-chan error) {
+	responseChan := make(chan string)
+	errorChan := make(chan error, 1)
 
-	if imageURI != "" {
-		img := genai.FileData{
-			MIMEType: "image/jpeg",
-			FileURI:  imageURI,
+	go func() {
+		defer close(responseChan)
+		defer close(errorChan)
+
+		var parts []genai.Part
+		parts = append(parts, genai.Text(prompt))
+
+		if imageURI != "" {
+			img := genai.FileData{
+				MIMEType: "image/jpeg",
+				FileURI:  imageURI,
+			}
+			parts = append(parts, img)
 		}
-		parts = append(parts, img)
-	}
 
-	// TODO: GenerateContentStream()を使うかどうか検討
-	res, err := v.model.GenerateContent(ctx, parts...)
-	if err != nil {
-		return "", err
-	}
+		iter := v.model.GenerateContentStream(ctx, parts...)
+		for {
+			resp, err := iter.Next()
+			if errors.Is(err, iterator.Done) {
+				return
+			}
+			if err != nil {
+				errorChan <- err
+				return
+			}
 
-	// Assuming we want the text from the first candidate's first part...?
-	if len(res.Candidates) > 0 && len(res.Candidates[0].Content.Parts) > 0 {
-		if text, ok := res.Candidates[0].Content.Parts[0].(genai.Text); ok {
-			return string(text), nil
+			if len(resp.Candidates) > 0 && len(resp.Candidates[0].Content.Parts) > 0 {
+				if text, ok := resp.Candidates[0].Content.Parts[0].(genai.Text); ok {
+					responseChan <- string(text)
+				}
+			}
 		}
-	}
+	}()
 
-	return "", nil
+	return responseChan, errorChan
 }
 
 // Close closes the AI client

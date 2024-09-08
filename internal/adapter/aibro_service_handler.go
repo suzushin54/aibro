@@ -46,17 +46,29 @@ func (s *AibroServiceHandler) ChatStream(
 
 		s.logger.InfoContext(ctx, "Received message", "content", req.Message)
 
-		res, err := s.client.Query(ctx, req.Message, "")
-		if err != nil {
-			s.logger.ErrorContext(ctx, "Failed to query AI", "error", err)
-			return connect.NewError(connect.CodeInternal, err)
-		}
+		resChan, errChan := s.client.Query(ctx, req.Message, "")
 
-		if err = stream.Send(&aibrov1.ChatStreamResponse{
-			Message: res,
-		}); err != nil {
-			s.logger.ErrorContext(ctx, "Failed to send message", "error", err)
-			return connect.NewError(connect.CodeInternal, err)
+		for {
+			select {
+			case res, ok := <-resChan:
+				if !ok {
+					// チャネルが閉じられた場合は終了
+					return nil
+				}
+				if err := stream.Send(&aibrov1.ChatStreamResponse{
+					Message: res,
+				}); err != nil {
+					s.logger.ErrorContext(ctx, "Failed to send message", "error", err)
+					return connect.NewError(connect.CodeInternal, err)
+				}
+			case err := <-errChan:
+				if err != nil {
+					s.logger.ErrorContext(ctx, "Failed to query AI", "error", err)
+					return connect.NewError(connect.CodeInternal, err)
+				}
+			case <-ctx.Done():
+				return nil
+			}
 		}
 	}
 }
