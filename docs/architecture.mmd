@@ -1,0 +1,45 @@
+graph TD
+    A[Client] <--> B[gRPC Server]
+    B <--> C[ServiceHandler]
+    C <--> D[Core]
+    D <--> E[AI Client]
+    E -.-> F[Vertex AI]
+
+    subgraph "Application Layer"
+        B
+    end
+
+    subgraph "Adapter Layer"
+        C
+    end
+
+    subgraph "Core Layer"
+        D
+    end
+
+    subgraph "Infrastructure Layer"
+        E
+    end
+
+    classDef default fill:#99c,stroke:#333,stroke-width:2px;
+    classDef appLayer fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef adapterLayer fill:#dfd,stroke:#333,stroke-width:2px;
+    classDef coreLayer fill:#fdd,stroke:#333,stroke-width:2px;
+    classDef infraLayer fill:#ddf,stroke:#333,stroke-width:2px;
+    classDef external fill:#fff,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
+
+    class A default;
+    class B appLayer;
+    class C adapterLayer;
+    class D coreLayer;
+    class E infraLayer;
+    class F external;
+
+    linkStyle default stroke-width:2px,fill:none,stroke:black;
+
+    style A color:#000;
+    style B color:#000;
+    style C color:#000;
+    style D color:#000;
+    style E color:#000;
+    style F color:#000;

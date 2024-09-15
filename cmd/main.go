@@ -5,10 +5,9 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/suzushin54/aibro/pkg/ai"
-
-	adapters "github.com/suzushin54/aibro/internal/adapter"
-	server "github.com/suzushin54/aibro/internal/infra"
+	"github.com/suzushin54/aibro/internal/adapter"
+	"github.com/suzushin54/aibro/internal/infra/ai"
+	server "github.com/suzushin54/aibro/internal/infra/grpc"
 )
 
 func main() {
@@ -44,7 +43,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ash := adapters.NewAibroServiceHandler(logger, ac)
+	ash := adapter.NewAibroServiceHandler(logger, ac)
 
 	srv := server.NewServer(ash)
 

@@ -1,4 +1,4 @@
-package server
+package grpc
 
 import (
 	"context"
@@ -33,17 +33,17 @@ func NewServer(ash *adapters.AibroServiceHandler) *Server {
 }
 
 func (s *Server) Start() error {
-	slog.Info("HTTP server starting.", "Address", s.server.Addr)
+	slog.Info("server starting.", "Address", s.server.Addr)
 
 	if err := s.server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("Failed to start HTTP server.", "error", err)
+		slog.Error("Failed to start server.", "error", err)
 		return err
 	}
 	return nil
 }
 
 func (s *Server) Stop() error {
-	slog.Info("Shutting down HTTP server.", "Address", s.server.Addr)
+	slog.Info("Shutting down server.", "Address", s.server.Addr)
 	return s.server.Shutdown(context.Background())
 }
 

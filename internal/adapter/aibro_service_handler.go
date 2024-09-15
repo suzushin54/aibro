@@ -1,15 +1,15 @@
-package adapters
+package adapter
 
 import (
 	"context"
 	"io"
 	"log/slog"
 
-	aibrov1 "github.com/suzushin54/aibro/gen/aibro/v1"
-	"github.com/suzushin54/aibro/gen/aibro/v1/aibrov1connect"
-	"github.com/suzushin54/aibro/pkg/ai"
+	"github.com/suzushin54/aibro/internal/infra/ai"
 
 	"connectrpc.com/connect"
+	aibrov1 "github.com/suzushin54/aibro/gen/aibro/v1"
+	"github.com/suzushin54/aibro/gen/aibro/v1/aibrov1connect"
 )
 
 // AibroServiceHandler implements the Aibrov1connect.AibroServiceHandler interface.
