@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/suzushin54/aibro/internal/adapter"
+	"github.com/suzushin54/aibro/internal/core"
 	"github.com/suzushin54/aibro/internal/infra/ai"
 	server "github.com/suzushin54/aibro/internal/infra/grpc"
 )
@@ -43,8 +44,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	ash := adapter.NewAibroServiceHandler(logger, ac)
-
+	aiBroCore := core.NewAIBroCore(ac)
+	ash := adapter.NewAibroServiceHandler(logger, aiBroCore)
 	srv := server.NewServer(ash)
 
 	go func() {

@@ -5,26 +5,25 @@ import (
 	"io"
 	"log/slog"
 
-	"github.com/suzushin54/aibro/internal/infra/ai"
-
 	"connectrpc.com/connect"
 	aibrov1 "github.com/suzushin54/aibro/gen/aibro/v1"
 	"github.com/suzushin54/aibro/gen/aibro/v1/aibrov1connect"
+	"github.com/suzushin54/aibro/internal/core"
 )
 
 // AibroServiceHandler implements the Aibrov1connect.AibroServiceHandler interface.
 type AibroServiceHandler struct {
 	logger *slog.Logger
-	client ai.Client
+	core   *core.AIBroCore
 	aibrov1connect.UnimplementedAIBroServiceHandler
 }
 
-func NewAibroServiceHandler(l *slog.Logger, c ai.Client) *AibroServiceHandler {
+func NewAibroServiceHandler(l *slog.Logger, c *core.AIBroCore) *AibroServiceHandler {
 	l = l.With("component", "AibroServiceHandler")
 
 	return &AibroServiceHandler{
 		logger: l,
-		client: c,
+		core:   c,
 	}
 }
 
@@ -46,7 +45,7 @@ func (s *AibroServiceHandler) ChatStream(
 
 		s.logger.InfoContext(ctx, "Received message", "content", req.Message)
 
-		resChan, errChan := s.client.Query(ctx, req.Message, "")
+		resChan, errChan := s.core.ProcessMessage(ctx, req.Message)
 
 		for {
 			select {
