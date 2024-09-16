@@ -45,6 +45,10 @@ func (s *AibroServiceHandler) ChatStream(
 
 		s.logger.InfoContext(ctx, "Received message", "content", req.Message)
 
+		s.core.DefineFlow(func(ctx context.Context, message string) (string, error) {
+			return "This is a message from your buddy. Respond in a way that speaks to you. :" + message, nil
+		})
+
 		resChan, errChan := s.core.ProcessMessage(ctx, req.Message)
 
 		for {
