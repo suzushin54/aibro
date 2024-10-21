@@ -32,10 +32,19 @@ func (s *AibroServiceHandler) ChatStream(
 	ctx context.Context,
 	stream *connect.BidiStream[aibrov1.ChatStreamRequest, aibrov1.ChatStreamResponse],
 ) error {
+	s.logger.InfoContext(ctx, "ChatStream called")
+
+requestLoop:
 	for {
+		s.logger.InfoContext(ctx, "Waiting for message")
+
 		req, err := stream.Receive()
+
+		s.logger.InfoContext(ctx, "Received message", "content", req.Message)
+
 		if err != nil {
 			if err == io.EOF {
+				s.logger.InfoContext(ctx, "Client closed the stream")
 				// クライアントがストリームを閉じた場合は正常終了扱い
 				return nil
 			}
@@ -55,8 +64,8 @@ func (s *AibroServiceHandler) ChatStream(
 			select {
 			case res, ok := <-resChan:
 				if !ok {
-					// チャネルが閉じられた場合は終了
-					return nil
+					s.logger.InfoContext(ctx, "No more message")
+					goto requestLoop
 				}
 				if err := stream.Send(&aibrov1.ChatStreamResponse{
 					Message: res,
@@ -70,7 +79,10 @@ func (s *AibroServiceHandler) ChatStream(
 					return connect.NewError(connect.CodeInternal, err)
 				}
 			case <-ctx.Done():
+				s.logger.InfoContext(ctx, "Context done")
 				return nil
+			default:
+				s.logger.InfoContext(ctx, "No message")
 			}
 		}
 	}
