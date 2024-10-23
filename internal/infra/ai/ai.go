@@ -63,10 +63,13 @@ func (v *vertexAIClient) Query(ctx context.Context, prompt string, imageURI stri
 			parts = append(parts, img)
 		}
 
+		var fullResponse string
+
 		iter := v.model.GenerateContentStream(ctx, parts...)
 		for {
 			resp, err := iter.Next()
 			if errors.Is(err, iterator.Done) {
+				responseChan <- fullResponse
 				return
 			}
 			if err != nil {
@@ -74,11 +77,18 @@ func (v *vertexAIClient) Query(ctx context.Context, prompt string, imageURI stri
 				return
 			}
 
-			if len(resp.Candidates) > 0 && len(resp.Candidates[0].Content.Parts) > 0 {
-				if text, ok := resp.Candidates[0].Content.Parts[0].(genai.Text); ok {
-					responseChan <- string(text)
-				}
+			// NOTE: The response from the AI model can come in multiple parts.
+			// We are concatenating these parts into a single message before sending it back to the client.
+			if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
+				return
 			}
+
+			text, ok := resp.Candidates[0].Content.Parts[0].(genai.Text)
+			if !ok || string(text) == "" {
+				return
+			}
+
+			responseChan <- string(text)
 		}
 	}()
 

@@ -64,7 +64,6 @@ requestLoop:
 			select {
 			case res, ok := <-resChan:
 				if !ok {
-					s.logger.InfoContext(ctx, "No more message")
 					goto requestLoop
 				}
 				if err := stream.Send(&aibrov1.ChatStreamResponse{
@@ -81,8 +80,6 @@ requestLoop:
 			case <-ctx.Done():
 				s.logger.InfoContext(ctx, "Context done")
 				return nil
-			default:
-				s.logger.InfoContext(ctx, "No message")
 			}
 		}
 	}
