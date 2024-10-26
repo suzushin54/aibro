@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"strings"
 
 	"connectrpc.com/connect"
 	aibrov1 "github.com/suzushin54/aibro/gen/aibro/v1"
@@ -34,13 +35,10 @@ func (s *AibroServiceHandler) ChatStream(
 ) error {
 	s.logger.InfoContext(ctx, "ChatStream called")
 
-requestLoop:
 	for {
 		s.logger.InfoContext(ctx, "Waiting for message")
 
 		req, err := stream.Receive()
-
-		s.logger.InfoContext(ctx, "Received message", "content", req.Message)
 
 		if err != nil {
 			if err == io.EOF {
@@ -59,28 +57,29 @@ requestLoop:
 		})
 
 		resChan, errChan := s.core.ProcessMessage(ctx, req.Message)
+		var buffer string
+		for res := range resChan {
+			buffer += res
+		}
 
-		for {
-			select {
-			case res, ok := <-resChan:
-				if !ok {
-					goto requestLoop
-				}
-				if err := stream.Send(&aibrov1.ChatStreamResponse{
-					Message: res,
-				}); err != nil {
-					s.logger.ErrorContext(ctx, "Failed to send message", "error", err)
-					return connect.NewError(connect.CodeInternal, err)
-				}
-			case err := <-errChan:
-				if err != nil {
-					s.logger.ErrorContext(ctx, "Failed to query AI", "error", err)
-					return connect.NewError(connect.CodeInternal, err)
-				}
-			case <-ctx.Done():
-				s.logger.InfoContext(ctx, "Context done")
-				return nil
+		buffer = strings.TrimSpace(buffer) // ignore trailing newline
+		if buffer != "" {
+			if err := stream.Send(&aibrov1.ChatStreamResponse{
+				Message: buffer,
+			}); err != nil {
+				s.logger.ErrorContext(ctx, "Failed to send message", "error", err)
+				return connect.NewError(connect.CodeInternal, err)
 			}
+		}
+
+		if err := <-errChan; err != nil {
+			s.logger.ErrorContext(ctx, "Failed to query AI", "error", err)
+			return connect.NewError(connect.CodeInternal, err)
+		}
+
+		if ctx.Err() != nil {
+			s.logger.InfoContext(ctx, "Context done")
+			return nil
 		}
 	}
 }
